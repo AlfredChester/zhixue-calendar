@@ -44,8 +44,6 @@ export default {
 
 		const apiUrl = `https://www.zhixue.com/middleweb/homework_middle_service/stuapp/getStudentHomeWorkList?${params.toString()}`;
 
-		console.log(`Fetching Zhixue homework data from: ${apiUrl}`);
-
 		try {
 			// 3. 发起请求到智学网
 			const zhixueRes = await fetch(apiUrl, {
