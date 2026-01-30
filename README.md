@@ -2,7 +2,7 @@
 
 ## Introduction
 
-A CalDEV server based on cloudflare workers to fetch homework on zhixue.com and generate a calendar.
+A CalDAV server based on cloudflare workers to fetch homework on zhixue.com and generate a calendar.
 
 ## Usage
 
