@@ -13,7 +13,9 @@
 	/**
 	 * Cron Triggers - fetch homework twice daily (morning and evening in China timezone)
 	 * https://developers.cloudflare.com/workers/configuration/cron-triggers/
-	 * 6:00 AM and 6:00 PM UTC+8 = 22:00 and 10:00 UTC (previous day for morning)
+	 * Times in UTC+8 (China Standard Time):
+	 *   - 6:00 AM CST = 22:00 UTC (previous day)
+	 *   - 6:00 PM CST = 10:00 UTC (same day)
 	 */
 	"triggers": {
 		"crons": ["0 22 * * *", "0 10 * * *"]
@@ -22,6 +24,7 @@
 	 * KV Namespace Binding for caching ICS data
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#kv-namespaces
 	 * Run: wrangler kv:namespace create CALENDAR_CACHE
+	 * Then replace YOUR_KV_NAMESPACE_ID below with the actual ID from the command output
 	 */
 	"kv_namespaces": [
 		{

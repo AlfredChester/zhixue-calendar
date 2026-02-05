@@ -149,6 +149,19 @@ async function updateCalendarCache(env: Env): Promise<string> {
 }
 
 /**
+ * Generate a simple hash for ETag based on content
+ */
+function generateETag(content: string): string {
+	let hash = 0;
+	for (let i = 0; i < content.length; i++) {
+		const char = content.charCodeAt(i);
+		hash = ((hash << 5) - hash) + char;
+		hash = hash & hash; // Convert to 32bit integer
+	}
+	return `"${Math.abs(hash).toString(16)}"`;
+}
+
+/**
  * Get cached calendar or fetch fresh data if cache is empty
  */
 async function getCachedCalendar(env: Env): Promise<string | null> {
@@ -189,8 +202,8 @@ export default {
 					'Access-Control-Allow-Origin': '*',
 					'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
 					'Access-Control-Allow-Headers': 'Content-Type',
-					// ETag for conditional requests
-					'ETag': `"${Date.now()}"`,
+					// ETag for conditional requests (based on content hash)
+					'ETag': generateETag(icsContent),
 					// Vary header for proper caching behavior
 					'Vary': 'Accept-Encoding'
 				}

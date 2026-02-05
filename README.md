@@ -65,7 +65,11 @@ A CalDAV server based on Cloudflare Workers to fetch homework from zhixue.com an
 #### Apple Calendar (macOS/iOS)
 1. Open Calendar app
 2. Go to File → New Calendar Subscription (or use ⌥⌘S)
-3. Enter your worker URL: `https://zhixue-calendar.<your-subdomain>.workers.dev`
+3. Enter your worker URL (replace `<your-subdomain>` with your Cloudflare Workers subdomain):
+   ```
+   https://zhixue-calendar.<your-subdomain>.workers.dev
+   ```
+   > **Tip**: Find your subdomain in the Cloudflare Dashboard under Workers & Pages → Overview
 4. Click Subscribe and configure refresh interval
 
 #### Google Calendar
