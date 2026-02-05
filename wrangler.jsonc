@@ -18,7 +18,10 @@
 	 *   - 6:00 PM CST = 10:00 UTC (same day)
 	 */
 	"triggers": {
-		"crons": ["0 22 * * *", "0 10 * * *"]
+		"crons": [
+			"0 22 * * *",
+			"0 10 * * *"
+		]
 	},
 	/**
 	 * KV Namespace Binding for caching ICS data
@@ -29,7 +32,7 @@
 	"kv_namespaces": [
 		{
 			"binding": "CALENDAR_CACHE",
-			"id": "YOUR_KV_NAMESPACE_ID"
+			"id": "0073397a580841a09f49f607807819d1"
 		}
 	]
 }

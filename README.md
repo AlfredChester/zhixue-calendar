@@ -33,7 +33,7 @@ A CalDAV server based on Cloudflare Workers to fetch homework from zhixue.com an
 
 3. Create a KV namespace for caching:
    ```bash
-   wrangler kv:namespace create CALENDAR_CACHE
+   wrangler kv namespace create CALENDAR_CACHE
    ```
 
 4. Update `wrangler.jsonc` with your KV namespace ID:
