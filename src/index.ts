@@ -227,12 +227,8 @@ async function getCachedCalendar(env: Env): Promise<string | null> {
 	]);
 
 	// If deployment version changed, invalidate cache
-	if (storedDeploymentVersion !== DEPLOYMENT_VERSION) {
-		return null;
-	}
-
 	// If no cache exists, return null to trigger a fetch
-	if (!icsContent) {
+	if (storedDeploymentVersion !== DEPLOYMENT_VERSION || !icsContent) {
 		return null;
 	}
 
