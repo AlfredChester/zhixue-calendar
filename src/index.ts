@@ -109,7 +109,12 @@ function generateCalendar(homeworkList: ZhixueHomework[]): string {
 
 	for (const hw of homeworkList) {
 		const summary = `[${hw.subjectName}] ${hw.hwTitle}`;
-		const description = `类型: ${hw.homeWorkTypeDTO?.typeName || '未知'}\n状态: ${hw.homeWorkState?.stateName || '未知'}\nID: ${hw.hwId}`;
+		const description = [
+			`类型: ${hw.homeWorkTypeDTO?.typeName || '未知'}`,
+			`状态: ${hw.homeWorkState?.stateName || '未知'}`,
+			`ID: ${hw.hwId}`,
+			`ddl: ${new Date(hw.endTime).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`
+		].join('\n');
 
 		const endDate = new Date(hw.endTime);
 		// Create event at 06:45 on the due date
