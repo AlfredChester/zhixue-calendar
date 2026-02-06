@@ -87,36 +87,34 @@ export function isCacheInValidPeriod(lastUpdated: Date, now: Date): boolean {
  * Fetch homework list from zhixue.com API
  */
 async function fetchHomeworkFromZhixue(cookie: string): Promise<ZhixueHomework[]> {
-	const params = new URLSearchParams({
-		subjectCode: '-1',
-		completeStatus: '0',
-		pageSize: '500',
-		pageIndex: '1'
-	});
-
-	const apiUrl = `https://www.zhixue.com/middleweb/homework_middle_service/stuapp/getStudentHomeWorkList?${params.toString()}`;
-
-	const zhixueRes = await fetch(apiUrl, {
-		method: 'GET',
-		headers: {
-			'Cookie': cookie,
-			'Referer': 'https://www.zhixue.com/middlehomework/web-student/views/',
-			'Origin': 'https://www.zhixue.com',
-			'appName': 'com.iflytek.zxzy.web.zx.stu'
+	let list: ZhixueHomework[] = [];
+	for (let stat = 0; stat < 2; stat++) {
+		const params = new URLSearchParams({
+			subjectCode: '-1',
+			completeStatus: stat.toString(),
+			pageSize: '500',
+			pageIndex: '1'
+		});
+		const apiUrl = `https://www.zhixue.com/middleweb/homework_middle_service/stuapp/getStudentHomeWorkList?${params.toString()}`;
+		const zhixueRes = await fetch(apiUrl, {
+			method: 'GET',
+			headers: {
+				'Cookie': cookie,
+				'Referer': 'https://www.zhixue.com/middlehomework/web-student/views/',
+				'Origin': 'https://www.zhixue.com',
+				'appName': 'com.iflytek.zxzy.web.zx.stu'
+			}
+		});
+		if (!zhixueRes.ok) {
+			throw new Error(`Failed to fetch from Zhixue: ${zhixueRes.status} ${zhixueRes.statusText}`);
 		}
-	});
-
-	if (!zhixueRes.ok) {
-		throw new Error(`Failed to fetch from Zhixue: ${zhixueRes.status} ${zhixueRes.statusText}`);
+		const data = await zhixueRes.json() as ZhixueResponse;
+		if (data.code !== 200) {
+			throw new Error(`Zhixue API error: ${data.info || JSON.stringify(data)}`);
+		}
+		list = list.concat(data.result.list || []);
 	}
-
-	const data = await zhixueRes.json() as ZhixueResponse;
-
-	if (data.code !== 200) {
-		throw new Error(`Zhixue API error: ${data.info || JSON.stringify(data)}`);
-	}
-
-	return data.result.list || [];
+	return list;
 }
 
 /**
