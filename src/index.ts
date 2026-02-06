@@ -35,7 +35,7 @@ const CACHE_KEY = 'zhixue-calendar-ics';
 const CACHE_META_KEY = 'zhixue-calendar-meta';
 
 /**
- * Fetch homework list from Zhixue.com API
+ * Fetch homework list from zhixue.com API
  */
 async function fetchHomeworkFromZhixue(cookie: string): Promise<ZhixueHomework[]> {
 	const params = new URLSearchParams({
@@ -173,7 +173,7 @@ export default {
 	 * Handle HTTP requests - serve the cached ICS file
 	 * Uses proper headers for Apple Calendar / macOS compatibility
 	 */
-	async fetch(request: Request, env: Env): Promise<Response> {
+	async fetch(request: Request, env: Env, ctx): Promise<Response> {
 		if (!env.ZHIXUE_COOKIE) {
 			return new Response('Error: ZHIXUE_COOKIE secret is not set.', { status: 500 });
 		}
