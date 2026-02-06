@@ -33,6 +33,55 @@ interface ZhixueResponse {
 const CACHE_KEY = 'zhixue-calendar-ics';
 // Cache metadata key for last update timestamp
 const CACHE_META_KEY = 'zhixue-calendar-meta';
+// Deployment timestamp key - updated on each deployment
+const DEPLOYMENT_KEY = 'zhixue-calendar-deployment';
+
+// Scheduled update times in UTC hours (22:00 UTC and 10:00 UTC)
+const SCHEDULED_HOURS_UTC = [22, 10];
+
+// Deployment version - update this value when you want to force cache refresh on deployment
+// Using a timestamp-like version that should be updated before each deployment
+const DEPLOYMENT_VERSION = '2026-02-06';
+
+interface CacheMeta {
+	lastUpdated: string;
+	homeworkCount: number;
+}
+
+/**
+ * Get the most recent scheduled update time before the given date
+ * Scheduled times are at 10:00 UTC and 22:00 UTC daily
+ */
+export function getLastScheduledTime(now: Date): Date {
+	const currentHourUTC = now.getUTCHours();
+	const result = new Date(now);
+
+	// Find the most recent scheduled hour that has passed
+	// Sort scheduled hours in descending order for easier comparison
+	const sortedHours = [...SCHEDULED_HOURS_UTC].sort((a, b) => b - a);
+
+	for (const hour of sortedHours) {
+		if (currentHourUTC >= hour) {
+			// This scheduled time has passed today
+			result.setUTCHours(hour, 0, 0, 0);
+			return result;
+		}
+	}
+
+	// All scheduled times are in the future today, so use the last one from yesterday
+	result.setUTCDate(result.getUTCDate() - 1);
+	result.setUTCHours(sortedHours[0], 0, 0, 0);
+	return result;
+}
+
+/**
+ * Check if the cache was updated within the current scheduled period
+ * Returns true if cache is fresh (updated after the most recent scheduled time)
+ */
+export function isCacheInValidPeriod(lastUpdated: Date, now: Date): boolean {
+	const lastScheduledTime = getLastScheduledTime(now);
+	return lastUpdated >= lastScheduledTime;
+}
 
 /**
  * Fetch homework list from zhixue.com API
@@ -143,12 +192,15 @@ async function updateCalendarCache(env: Env): Promise<string> {
 	const homeworkList = await fetchHomeworkFromZhixue(env.ZHIXUE_COOKIE);
 	const icsContent = generateCalendar(homeworkList);
 
-	// Store in KV with metadata
-	await env.CALENDAR_CACHE.put(CACHE_KEY, icsContent);
-	await env.CALENDAR_CACHE.put(CACHE_META_KEY, JSON.stringify({
-		lastUpdated: new Date().toISOString(),
-		homeworkCount: homeworkList.length
-	}));
+	// Store in KV with metadata and deployment version
+	await Promise.all([
+		env.CALENDAR_CACHE.put(CACHE_KEY, icsContent),
+		env.CALENDAR_CACHE.put(CACHE_META_KEY, JSON.stringify({
+			lastUpdated: new Date().toISOString(),
+			homeworkCount: homeworkList.length
+		})),
+		env.CALENDAR_CACHE.put(DEPLOYMENT_KEY, DEPLOYMENT_VERSION)
+	]);
 
 	return icsContent;
 }
@@ -167,10 +219,46 @@ function generateETag(content: string): string {
 }
 
 /**
- * Get cached calendar or fetch fresh data if cache is empty
+ * Get cached calendar or fetch fresh data if cache is empty or stale
  */
 async function getCachedCalendar(env: Env): Promise<string | null> {
-	return await env.CALENDAR_CACHE.get(CACHE_KEY);
+	const [icsContent, metaString, storedDeploymentVersion] = await Promise.all([
+		env.CALENDAR_CACHE.get(CACHE_KEY),
+		env.CALENDAR_CACHE.get(CACHE_META_KEY),
+		env.CALENDAR_CACHE.get(DEPLOYMENT_KEY)
+	]);
+
+	// If deployment version changed, invalidate cache
+	if (storedDeploymentVersion !== DEPLOYMENT_VERSION) {
+		return null;
+	}
+
+	// If no cache exists, return null to trigger a fetch
+	if (!icsContent) {
+		return null;
+	}
+
+	// Check if cache is in valid period
+	if (metaString) {
+		try {
+			const meta = JSON.parse(metaString) as CacheMeta;
+			const lastUpdated = new Date(meta.lastUpdated);
+			const now = new Date();
+
+			if (!isCacheInValidPeriod(lastUpdated, now)) {
+				// Cache is stale (not updated in current period)
+				return null;
+			}
+		} catch {
+			// If metadata is corrupted, treat cache as stale
+			return null;
+		}
+	} else {
+		// No metadata means we can't verify cache freshness
+		return null;
+	}
+
+	return icsContent;
 }
 
 export default {
